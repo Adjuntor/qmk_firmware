@@ -87,10 +87,10 @@ bool process_record_user(uint16_t keycode, keyrecord_t* record) {
 
 void matrix_scan_user(void) {
   if (spam_assassinate) {
-    SEND_STRING( SS_TAP(X_LEFT_CTRL) SS_TAP(X_A));
+    SEND_STRING( SS_TAP(X_LEFT_CTRL) SS_TAP(X_Y));
   }
   if (spam_stab) {
-    SEND_STRING( SS_TAP(X_LEFT_SHIFT) SS_TAP(X_A) SS_TAP(X_T));
+    SEND_STRING( SS_TAP(X_LEFT_SHIFT) SS_TAP(X_Y) SS_TAP(X_U));
   }
   if (spam_alicemacro) {
     tap_code_delay(KC_MS_BTN1, randy(300,200));
