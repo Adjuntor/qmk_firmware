@@ -28,11 +28,13 @@ enum layers{
 
 
 enum custom_keycodes {
-    STAB = SAFE_RANGE,
+    ACTIVATE_INSERT = SAFE_RANGE,
+    STAB,
     ASSASSINATE,
     ALICEMACRO,
     JAM,
     LMOUSECLICK,
+    
 };
 
 bool spam_assassinate;
@@ -40,6 +42,7 @@ bool spam_stab;
 bool spam_alicemacro;
 bool spam_jam = false;
 bool spam_lmouseclick = false;
+bool activate_insert = false;
 uint32_t spam_timer = 0;
 
 
@@ -53,7 +56,7 @@ int randy(int max, int min){
 bool win_mode;   // declare global variable
 
 bool dip_switch_update_user(uint8_t index, bool active) { 
-    if(index == 0 && active) { 
+    if (index == 0 && active) { 
         win_mode = true;
     } else {
         win_mode = false;
@@ -63,6 +66,15 @@ bool dip_switch_update_user(uint8_t index, bool active) {
 
 bool process_record_user(uint16_t keycode, keyrecord_t* record) {
     switch (keycode) {
+    case ACTIVATE_INSERT:
+        if (record->event.pressed) {
+            activate_insert = !activate_insert;
+            tap_code(KC_INSERT);
+        } else {
+            //nothing
+        }
+        break;
+
     case ASSASSINATE:
         if (record->event.pressed) {
             spam_assassinate = true;
@@ -135,38 +147,89 @@ void matrix_scan_user(void) {
 
 };
 
-bool rgb_matrix_indicators_user(void) {
-    uint8_t current_layer = get_highest_layer(layer_state);
-    switch (current_layer) {
+/*
+*  RGB ID_KEY
+*  **********
+*  0_ESC,              1_F1,     2_F2,     3_F3,     4_F4,     5_F5,     6_F6,     7_F7,     8_F8,     9_F9,     10_F10,   11_F11,     12_F12,   13_PSCR,  14_NO,    15_MOD,
+*  16_GRV,   17_1,     18_2,     19_3,     20_4,     21_5,     22_6,     23_7,     24_8,     25_9,     26_0,     27_MINS,  28_EQL,     29_BSPC,  30_INS,   31_HOME,  32_PGUP,    33_NUM,   34_PSLS,  35_PAST,  36_PMNS,
+*  37_TAB,   38_Q,     39_W,     40_E,     41_R,     42_T,     43_Y,     44_U,     45_I,     46_O,     47_P,     48_LBRC,  49_RBRC,    50_BSLS,  51_DEL,   52_END,   53_PGDN,    54_P7,    55_P8,    56_P9,    57_PPLS,
+*  58_CAPS,  59_A,     60_S,     61_D,     62_F,     63_G,     64_H,     65_J,     66_K,     67_L,     68_SCLN,  69_QUOT,              70_ENT,                                   71_P4,    72_P5,    73_P6,
+*  74_LSFT,            75_Z,     76_X,     77_C,     78_V,     79_B,     80_N,     81_M,     82_COMM,  83_DOT,   84_SLSH,              85_RSFT,            86_UP,                87_P1,    88_P2,    89_P3,    90_PENT,
+*  91_LCTL,  92_LWIN,  93_LALT,                                94_SPC,                                 95_RALT,  96_RWIN,  97_FN),     98_RCTL,  99_LEFT,  100_DOWN,  101_RGHT,  102_P0,             103_PDOT         ),
+*/
+
+bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) { 
+     for (uint8_t i = led_min; i <= led_max; i++) {
+        if (host_keyboard_led_state().caps_lock) {
+            int keys[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 58};
+            for(uint8_t r = 0; r < sizeof(keys)/sizeof(int); r++) {
+                rgb_matrix_set_color(keys[r], RGB_RED);
+            }
+        }
+        if (host_keyboard_led_state().num_lock) {
+            int keys[] = {33, 34, 35, 36, 54, 55, 56, 57, 71, 72, 73, 87, 88, 89, 90, 102, 103};
+            for(uint8_t r = 0; r < sizeof(keys)/sizeof(int); r++) {
+                rgb_matrix_set_color(keys[r], RGB_RED);
+            } 
+        } else {
+            int keys[] = {33, 34, 35, 36, 54, 55, 56, 57, 71, 72, 73, 87, 88, 89, 90, 102, 103};
+            for(uint8_t r = 0; r < sizeof(keys)/sizeof(int); r++) {
+                rgb_matrix_set_color(keys[r], RGB_BLACK);
+            }
+        }
+
+        if (activate_insert == true) {
+            int keys[] = {30, 31, 32, 51, 52, 53};
+            for(uint8_t r = 0; r < sizeof(keys)/sizeof(int); r++) {
+                rgb_matrix_set_color(keys[r], RGB_RED);
+            } 
+        }
+ 
+        if (spam_jam == true) {
+            int keys[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 65};
+            for(uint8_t r = 0; r < sizeof(keys)/sizeof(int); r++) {
+                rgb_matrix_set_color(keys[r], RGB_RED);
+            }
+        }
+
+        if (spam_lmouseclick == true) {
+            int keys[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 81};
+            for(uint8_t r = 0; r < sizeof(keys)/sizeof(int); r++) {
+                rgb_matrix_set_color(keys[r], RGB_RED);
+            }
+        }
+
+        switch(get_highest_layer(layer_state|default_layer_state)) {
+
         case MAC_BASE:
         case WIN_BASE:
             if (win_mode) {
-                rgb_matrix_set_color_all(0x2C, 0x52, 0x8C);  // RGB YInMn Blue
+                rgb_matrix_set_color(i, 0x2C, 0x52, 0x8C);  // RGB YInMn Blue
             } else {
-                rgb_matrix_set_color_all(0x9E, 0x9E, 0x9E);  // RGB white
+                rgb_matrix_set_color(i, 0x9E, 0x9E, 0x9E);  // RGB white
             }
             break;
         case WIN_FN:
-            rgb_matrix_set_color_all(0x00, 0x9E, 0x00);  // RGB green
+            rgb_matrix_set_color(i, 0x00, 0x9E, 0x00);  // RGB green
             break;
         case MAC_FN:
-            rgb_matrix_set_color_all(0x51, 0xA0, 0xD5);  // RGB Carolina Blue
+            rgb_matrix_set_color(i, 0x51, 0xA0, 0xD5);  // RGB Carolina Blue
             break;
         case WIN_NIKKE:
-            rgb_matrix_set_color_all(0x9E, 0x00, 0x00);  // RGB red
+            rgb_matrix_set_color(i, 0xF0, 0x14, 0x3C);  // RGB Crimson
             break;
         case WIN_MAPLE:
-            rgb_matrix_set_color_all(0xFF, 0x22, 0x00);  // RGB orange
+            rgb_matrix_set_color(i, 0xFF, 0x22, 0x00);  // RGB orange
             break;
         case WIN_FORTNITE:
-            rgb_matrix_set_color_all(0x5F, 0xCE, 0xEA);  // RGB sky blue
+            rgb_matrix_set_color(i, 0x00,0x00, 0xFF); // RGB blue
             break;
         default:
             break;
+        }
     }
     return false;
 }
-
 
 
 // clang-format off
@@ -188,45 +251,43 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         _______,  _______,  _______,                                _______,                                _______,  _______,  _______,    _______,  _______,  _______,  _______,  _______,            _______         ),
 
     [WIN_BASE] = LAYOUT_104_ansi(
-        KC_ESC,             KC_F1,    KC_F2,    KC_F3,    KC_F4,    KC_F5,    KC_F6,    KC_F7,    KC_F8,    KC_F9,    KC_F10,   KC_F11,     KC_F12,   KC_PSCR,  KC_NO,    RGB_MOD,
-        KC_GRV,   KC_1,     KC_2,     KC_3,     KC_4,     KC_5,     KC_6,     KC_7,     KC_8,     KC_9,     KC_0,     KC_MINS,  KC_EQL,     KC_BSPC,  KC_INS,   KC_HOME,  KC_PGUP,  KC_NUM,   KC_PSLS,  KC_PAST,  KC_PMNS,
+        KC_ESC,             KC_F1,    KC_F2,    KC_F3,    KC_F4,    KC_F5,    KC_F6,    KC_F7,    KC_F8,    KC_F9,    KC_F10,   KC_F11,     KC_F12,   KC_PSCR,  RGB_TOG,    RGB_MOD,
+        KC_GRV,   KC_1,     KC_2,     KC_3,     KC_4,     KC_5,     KC_6,     KC_7,     KC_8,     KC_9,     KC_0,     KC_MINS,  KC_EQL,     KC_BSPC,  ACTIVATE_INSERT,   KC_HOME,  KC_PGUP,  KC_NUM,   KC_PSLS,  KC_PAST,  KC_PMNS,
         KC_TAB,   KC_Q,     KC_W,     KC_E,     KC_R,     KC_T,     KC_Y,     KC_U,     KC_I,     KC_O,     KC_P,     KC_LBRC,  KC_RBRC,    KC_BSLS,  KC_DEL,   KC_END,   KC_PGDN,  KC_P7,    KC_P8,    KC_P9,    KC_PPLS,
         KC_CAPS,  KC_A,     KC_S,     KC_D,     KC_F,     KC_G,     KC_H,     KC_J,     KC_K,     KC_L,     KC_SCLN,  KC_QUOT,              KC_ENT,                                 KC_P4,    KC_P5,    KC_P6,
         KC_LSFT,            KC_Z,     KC_X,     KC_C,     KC_V,     KC_B,     KC_N,     KC_M,     KC_COMM,  KC_DOT,   KC_SLSH,              KC_RSFT,            KC_UP,              KC_P1,    KC_P2,    KC_P3,    KC_PENT,
         KC_LCTL,  KC_LWIN,  KC_LALT,                                KC_SPC,                                 KC_RALT,  KC_RWIN,  MO(WIN_FN), KC_RCTL,  KC_LEFT,  KC_DOWN,  KC_RGHT,  KC_P0,              KC_PDOT         ),
 
     [WIN_FN] = LAYOUT_104_ansi(
-        _______,            KC_BRID,  KC_BRIU,  KC_TASK,  KC_FLXP,  RGB_VAD,  RGB_VAI,  KC_MPRV,  KC_MPLY,  KC_MNXT,  KC_MUTE,  KC_VOLD,    KC_VOLU,  _______,  _______,  TO(WIN_BASE),
+        _______,            _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,    _______,  _______,  _______,  TO(WIN_BASE),
         _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,    _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,
-        RGB_TOG,  RGB_MOD,  RGB_VAI,  RGB_HUI,  RGB_SAI,  RGB_SPI,  _______,  _______,  _______,  _______,  _______,  _______,  _______,    _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,
-        _______,  RGB_RMOD, RGB_VAD,  RGB_HUD,  TG(WIN_FORTNITE),  RGB_SPD,  RGB_SAD,  _______,  _______,  _______,  _______,  _______,              _______,                                _______,  _______,  _______,
-        _______,            _______,  _______,  _______,  _______,  NK_TOGG,  TG(WIN_NIKKE),  TG(WIN_MAPLE),  _______,  _______,  _______,  _______,            _______,            _______,  _______,  _______,  _______,
+        _______,   _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,    _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,
+        _______,    _______, _______,  _______,  TG(WIN_FORTNITE),  _______,  _______,  _______,  _______,  _______,  _______,  _______,              _______,                                _______,  _______,  _______,
+        _______,     _______,  _______,  _______,  _______,  _______,  TG(WIN_NIKKE),  TG(WIN_MAPLE),  _______,  _______,  _______,  _______,            _______,            _______,  _______,  _______,  _______,
         _______,  _______,  _______,                                _______,                                _______,  _______,  _______,    _______,  _______,  _______,  _______,  _______,            _______         ),
 
     [WIN_NIKKE] = LAYOUT_104_ansi(
-        KC_ESC,             KC_F1,    KC_F2,    KC_F3,    KC_F4,    KC_F5,    KC_F6,    KC_F7,    KC_F8,    KC_F9,    KC_F10,   KC_F11,     KC_F12,   KC_PSCR,  KC_NO,    TO(WIN_BASE),
-        KC_GRV,   KC_1,     KC_2,     KC_3,     KC_4,     KC_5,     KC_6,     KC_7,     KC_8,     KC_9,     KC_0,     KC_MINS,  KC_EQL,     KC_BSPC,  KC_INS,   KC_HOME,  KC_PGUP,  KC_NUM,   KC_PSLS,  KC_PAST,  KC_PMNS,
-        KC_TAB,   KC_Q,     KC_W,     KC_E,     ALICEMACRO,     KC_T,     KC_Y,     KC_U,     KC_I,     KC_O,     KC_P,     KC_LBRC,  KC_RBRC,    KC_BSLS,  KC_DEL,   KC_END,   KC_PGDN,  KC_P7,    KC_P8,    KC_P9,    KC_PPLS,
-        KC_CAPS,  KC_A,     KC_S,     KC_D,     KC_F,     KC_G,     KC_H,     KC_J,     KC_K,     KC_L,     KC_SCLN,  KC_QUOT,              KC_ENT,                                 KC_P4,    KC_P5,    KC_P6,
-        KC_LSFT,            KC_Z,     KC_X,     KC_C,     KC_V,     KC_B,     KC_N,     KC_M,     KC_COMM,  KC_DOT,   KC_SLSH,              KC_RSFT,            KC_UP,              KC_P1,    KC_P2,    KC_P3,    KC_PENT,
-        KC_LCTL,  KC_LWIN,  KC_LALT,                                KC_SPC,                                 KC_RALT,  KC_RWIN,  MO(WIN_FN), KC_RCTL,  KC_LEFT,  KC_DOWN,  KC_RGHT,  KC_P0,              KC_PDOT         ),
+        _______,            _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,    _______,  _______,  _______,  TO(WIN_BASE),
+        _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,    _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,
+        _______,   _______,  _______,  _______,  ALICEMACRO,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,    _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,
+        _______,    _______, _______,  _______,   _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,              _______,                                _______,  _______,  _______,
+        _______,     _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,            _______,            _______,  _______,  _______,  _______,
+        _______,  _______,  _______,                                _______,                                _______,  _______,  _______,    _______,  _______,  _______,  _______,  _______,            _______         ),
 
     [WIN_MAPLE] = LAYOUT_104_ansi(
-        KC_ESC,             KC_F1,    KC_F2,    KC_F3,    KC_F4,    KC_F5,    KC_F6,    KC_F7,    KC_F8,    KC_F9,    KC_F10,   KC_F11,     KC_F12,   KC_PSCR,  KC_NO,    TO(WIN_BASE),
-        KC_GRV,   KC_1,     KC_2,     KC_3,     KC_4,     KC_5,     KC_6,     KC_7,     KC_8,     KC_9,     KC_0,     KC_MINS,  KC_EQL,     KC_BSPC,  KC_INS,   KC_HOME,  KC_PGUP,  KC_NUM,   KC_PSLS,  KC_PAST,  KC_PMNS,
-        KC_TAB,   KC_Q,     KC_W,     KC_E,     KC_R,     KC_T,     KC_Y,     KC_U,     KC_I,     KC_O,     KC_P,     KC_LBRC,  KC_RBRC,    KC_BSLS,  KC_DEL,   KC_END,   KC_PGDN,  KC_P7,    KC_P8,    KC_P9,    KC_PPLS,
-        KC_CAPS,  KC_A,     KC_S,     KC_D,     KC_F,     KC_G,     KC_H,     KC_J,     KC_K,     KC_L,     KC_SCLN,  KC_QUOT,              KC_ENT,                                 KC_P4,    KC_P5,    KC_P6,
-        STAB,               KC_Z,     KC_X,     KC_C,     KC_V,     KC_B,     KC_N,     KC_M,     KC_COMM,  KC_DOT,   KC_SLSH,              KC_RSFT,            KC_UP,              KC_P1,    KC_P2,    KC_P3,    KC_PENT,
-        ASSASSINATE,        KC_LWIN,  KC_LALT,                      KC_SPC,                                 KC_RALT,  KC_RWIN,  MO(WIN_FN), KC_RCTL,  KC_LEFT,  KC_DOWN,  KC_RGHT,  KC_P0,              KC_PDOT         ),
+        _______,            _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,    _______,  _______,  _______,  TO(WIN_BASE),
+        _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,    _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,
+        _______,   _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,    _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,
+        _______,    _______, _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,              _______,                                _______,  _______,  _______,
+        STAB,        _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,            _______,            _______,  _______,  _______,  _______,
+        ASSASSINATE,  _______,  _______,                                _______,                                _______,  _______,  _______,    _______,  _______,  _______,  _______,  _______,            _______         ),
     
     [WIN_FORTNITE] = LAYOUT_104_ansi(
-        KC_ESC,             KC_F1,    KC_F2,    KC_F3,    KC_F4,    KC_F5,    KC_F6,    KC_F7,    KC_F8,    KC_F9,    KC_F10,   KC_F11,     KC_F12,   KC_PSCR,  KC_NO,    TO(WIN_BASE),
-        KC_GRV,   KC_1,     KC_2,     KC_3,     KC_4,     KC_5,     KC_6,     KC_7,     KC_8,     KC_9,     KC_0,     KC_MINS,  KC_EQL,     KC_BSPC,  KC_INS,   KC_HOME,  KC_PGUP,  KC_NUM,   KC_PSLS,  KC_PAST,  KC_PMNS,
-        KC_TAB,   KC_Q,     KC_W,     KC_E,     KC_R,     KC_T,     KC_Y,     KC_U,     KC_I,     KC_O,     KC_P,     KC_LBRC,  KC_RBRC,    KC_BSLS,  KC_DEL,   KC_END,   KC_PGDN,  KC_P7,    KC_P8,    KC_P9,    KC_PPLS,
-        KC_CAPS,  KC_A,     KC_S,     KC_D,     KC_F,     KC_G,     KC_H,     JAM,     KC_K,     KC_L,     KC_SCLN,  KC_QUOT,              KC_ENT,                                 KC_P4,    KC_P5,    KC_P6,
-        KC_LSFT,            KC_Z,     KC_X,     KC_C,     KC_V,     KC_B,     KC_N,     LMOUSECLICK,     KC_COMM,  KC_DOT,   KC_SLSH,              KC_RSFT,            KC_UP,              KC_P1,    KC_P2,    KC_P3,    KC_PENT,
-        KC_LCTL,  KC_LWIN,  KC_LALT,                                KC_SPC,                                 KC_RALT,  KC_RWIN,  MO(WIN_FN), KC_RCTL,  KC_LEFT,  KC_DOWN,  KC_RGHT,  KC_P0,              KC_PDOT         ),
-
-
+        _______,            _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,    _______,  _______,  _______,  TO(WIN_BASE),
+        _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,    _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,
+        _______,   _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,    _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,
+        _______,    _______,  _______,  _______,  _______,  _______,  _______,  JAM,  _______,  _______,  _______,  _______,              _______,                                _______,  _______,  _______,
+        _______,     _______,  _______,  _______,  _______,  _______,  _______,  LMOUSECLICK,  _______,  _______,  _______,  _______,            _______,            _______,  _______,  _______,  _______,
+        _______,  _______,  _______,                                _______,                                _______,  _______,  _______,    _______,  _______,  _______,  _______,  _______,            _______         ),
 
 };
