@@ -102,6 +102,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t* record) {
     case JAM:
         if (record->event.pressed) {
             spam_jam = !spam_jam;
+            spam_timer = timer_read32();
         } else {
             //nothing
         }
@@ -110,6 +111,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t* record) {
     case LMOUSECLICK:
         if (record->event.pressed) {
             spam_lmouseclick = !spam_lmouseclick;
+            spam_timer = timer_read32();
         } else {
             //nothing
         }
@@ -133,7 +135,7 @@ void matrix_scan_user(void) {
     }
   }
   if (spam_jam) {
-    if (timer_elapsed32(spam_timer) > randy(150000,120000)) {
+    if (timer_elapsed32(spam_timer) > randy(150000,60000)) {
         SEND_STRING(SS_DOWN(X_B) SS_DELAY(200) SS_TAP(X_SPACE) SS_DELAY(200) SS_UP(X_B));
         spam_timer = timer_read32();
     }
