@@ -119,8 +119,8 @@ void matrix_scan_user(void) {
     SEND_STRING( SS_TAP(X_LEFT_SHIFT) SS_TAP(X_Y) SS_TAP(X_U));
   }
   if (spam_alicemacro) {
-    if (timer_elapsed32(spam_timer) > randy(50,20)) {
-        tap_code_delay(KC_MS_BTN1, randy(300,200));
+    if (timer_elapsed32(spam_timer) > randy(40,20)) {
+        tap_code_delay(KC_MS_BTN1, randy(250,220));
         spam_timer = timer_read32();
     }
   }
