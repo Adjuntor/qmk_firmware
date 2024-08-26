@@ -120,7 +120,7 @@ void matrix_scan_user(void) {
   }
   if (spam_alicemacro) {
     if (timer_elapsed32(spam_timer) > randy(40,20)) {
-        tap_code_delay(KC_MS_BTN1, randy(250,220));
+        tap_code_delay(KC_MS_BTN1, randy(260,200));
         spam_timer = timer_read32();
     }
   }
