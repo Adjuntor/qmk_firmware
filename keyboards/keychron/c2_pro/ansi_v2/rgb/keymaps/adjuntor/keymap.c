@@ -70,16 +70,19 @@ bool process_record_user(uint16_t keycode, keyrecord_t* record) {
     case ALICEMACRO:
         if (record->event.pressed) {
             spam_alicemacro = true;
+            spam_timer = timer_read32();
         } else {
             spam_alicemacro = false;
+            spam_timer = timer_read32();
         }
         break;
 
     case ADVISE:
         if (record->event.pressed) {
-            spam_advise = true;
+            spam_advise = !spam_advise;
+            spam_timer = timer_read32();
         } else {
-            spam_advise = false;
+            //nothing
         }
         break;
 
