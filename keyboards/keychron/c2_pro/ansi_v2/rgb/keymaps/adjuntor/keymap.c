@@ -22,27 +22,30 @@ enum layers{
   WIN_BASE,
   WIN_FN,
   WIN_NIKKE,
-  WIN_MAPLE,
+  WIN_MACRO,
   WIN_FORTNITE,
 };
 
 
 enum custom_keycodes {
     ALICEMACRO = SAFE_RANGE,
+    ADVISE,
+    BURST,
     STAB,
     ASSASSINATE,
     JAM,
     LMOUSECLICK,
-    
+  
 };
 
-bool spam_assassinate;
-bool spam_stab;
-bool spam_alicemacro;
+bool spam_alicemacro  = false;
+bool spam_advise = false;
+bool spam_burst = false;
+bool spam_assassinate  = false;
+bool spam_stab  = false;
 bool spam_jam = false;
 bool spam_lmouseclick = false;
 uint32_t spam_timer = 0;
-
 
 int randy(int max, int min){
    return (rand() % (max + 1 - min)) + min;
@@ -64,6 +67,30 @@ bool dip_switch_update_user(uint8_t index, bool active) {
 
 bool process_record_user(uint16_t keycode, keyrecord_t* record) {
     switch (keycode) {
+    case ALICEMACRO:
+        if (record->event.pressed) {
+            spam_alicemacro = true;
+        } else {
+            spam_alicemacro = false;
+        }
+        break;
+
+    case ADVISE:
+        if (record->event.pressed) {
+            spam_advise = true;
+        } else {
+            spam_advise = false;
+        }
+        break;
+
+    case BURST:
+        if (record->event.pressed) {
+            spam_burst = !spam_burst;
+            spam_timer = timer_read32();
+        } else {
+            //nothing
+        }
+        break;
 
     case ASSASSINATE:
         if (record->event.pressed) {
@@ -78,14 +105,6 @@ bool process_record_user(uint16_t keycode, keyrecord_t* record) {
             spam_stab = true;
         } else {
             spam_stab = false;
-        }
-        break;
-
-    case ALICEMACRO:
-        if (record->event.pressed) {
-            spam_alicemacro = true;
-        } else {
-            spam_alicemacro = false;
         }
         break;
 
@@ -112,17 +131,35 @@ bool process_record_user(uint16_t keycode, keyrecord_t* record) {
 
 
 void matrix_scan_user(void) {
-  if (spam_assassinate) {
-    SEND_STRING( SS_TAP(X_LEFT_CTRL) SS_TAP(X_Y));
-  }
-  if (spam_stab) {
-    SEND_STRING( SS_TAP(X_LEFT_SHIFT) SS_TAP(X_Y) SS_TAP(X_U));
-  }
   if (spam_alicemacro) {
     if (timer_elapsed32(spam_timer) > randy(50,20)) {
         tap_code_delay(KC_MS_BTN1, randy(250,200));
         spam_timer = timer_read32();
     }
+  }
+  if (spam_advise) {
+    if (timer_elapsed32(spam_timer) > randy(50,20)) {
+        tap_code_delay(KC_1, randy(80,60));
+        tap_code_delay(KC_SPACE, randy(80,60));
+        tap_code_delay(KC_RIGHT_BRACKET, randy(80,60));
+        spam_timer = timer_read32();
+    }
+  }
+  if (spam_burst) {
+    if (timer_elapsed32(spam_timer) > randy(50,20)) {
+        tap_code_delay(KC_A, randy(80,60));
+        tap_code_delay(KC_S, randy(80,60));
+        tap_code_delay(KC_D, randy(80,60));
+        tap_code_delay(KC_F, randy(80,60));
+        spam_timer = timer_read32();
+    }
+  }
+
+  if (spam_assassinate) {
+    SEND_STRING( SS_TAP(X_LEFT_CTRL) SS_TAP(X_Y));
+  }
+  if (spam_stab) {
+    SEND_STRING( SS_TAP(X_LEFT_SHIFT) SS_TAP(X_Y) SS_TAP(X_U));
   }
   if (spam_jam) {
     if (timer_elapsed32(spam_timer) > randy(150000,60000)) {
@@ -136,7 +173,6 @@ void matrix_scan_user(void) {
         spam_timer = timer_read32();
     }
   }
-
 };
 
 /*
@@ -169,7 +205,15 @@ bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
                 rgb_matrix_set_color(keys[r], RGB_BLACK);
             }
         }
- 
+        
+        if (spam_advise == true) {
+            rgb_matrix_set_color(14, RGB_BLUE);
+        }
+        
+        if (spam_burst == true) {
+            rgb_matrix_set_color(13, RGB_BLUE);
+        }
+
         if (spam_jam == true) {
             int keys[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 65};
             for(uint8_t r = 0; r < sizeof(keys)/sizeof(int); r++) {
@@ -203,7 +247,7 @@ bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
         case WIN_NIKKE:
             rgb_matrix_set_color(i, 0xF0, 0x14, 0x3C);  // RGB Crimson
             break;
-        case WIN_MAPLE:
+        case WIN_MACRO:
             rgb_matrix_set_color(i, 0xFF, 0x22, 0x00);  // RGB orange
             break;
         case WIN_FORTNITE:
@@ -248,24 +292,24 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,    _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,
         _______,   _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,    _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,
         _______,    _______, _______,  _______,  TG(WIN_FORTNITE),  _______,  _______,  _______,  _______,  _______,  _______,  _______,              _______,                                _______,  _______,  _______,
-        _______,     _______,  _______,  _______,  _______,  _______,  TG(WIN_NIKKE),  TG(WIN_MAPLE),  _______,  _______,  _______,  _______,            _______,            _______,  _______,  _______,  _______,
+        _______,     _______,  _______,  _______,  _______,  _______,  TG(WIN_NIKKE),  TG(WIN_MACRO),  _______,  _______,  _______,  _______,            _______,            _______,  _______,  _______,  _______,
         _______,  _______,  _______,                                _______,                                _______,  _______,  _______,    _______,  _______,  _______,  _______,  _______,            _______         ),
 
     [WIN_NIKKE] = LAYOUT_104_ansi(
-        _______,            _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,    _______,  _______,  _______,  TO(WIN_BASE),
+        _______,            _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,    _______,  BURST,  ADVISE,  TO(WIN_BASE),
         _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,    _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,
         _______,   _______,  _______,  _______,  ALICEMACRO,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,    _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,
         _______,    _______, _______,  _______,   _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,              _______,                                _______,  _______,  _______,
         _______,     _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,            _______,            _______,  _______,  _______,  _______,
         _______,  _______,  _______,                                _______,                                _______,  _______,  _______,    _______,  _______,  _______,  _______,  _______,            _______         ),
 
-    [WIN_MAPLE] = LAYOUT_104_ansi(
+    [WIN_MACRO] = LAYOUT_104_ansi(
         _______,            _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,    _______,  _______,  _______,  TO(WIN_BASE),
         _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,    _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,
         _______,   _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,    _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,
         _______,    _______, _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,              _______,                                _______,  _______,  _______,
-        STAB,        _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,            _______,            _______,  _______,  _______,  _______,
-        ASSASSINATE,  _______,  _______,                                _______,                                _______,  _______,  _______,    _______,  _______,  _______,  _______,  _______,            _______         ),
+        _______,        _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,            _______,            _______,  _______,  _______,  _______,
+        _______,  _______,  _______,                                _______,                                _______,  _______,  _______,    _______,  _______,  _______,  _______,  _______,            _______         ),
     
     [WIN_FORTNITE] = LAYOUT_104_ansi(
         _______,            _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,    _______,  _______,  _______,  TO(WIN_BASE),
