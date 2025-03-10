@@ -19,17 +19,21 @@
 
 enum layers {
     BASE,
+    FN,
     NIKKE,
+    L3,
 };
 
 enum custom_keycodes {
-    ALICEMACRO = SAFE_RANGE,
+    SNIPERMACRO = SAFE_RANGE,
+    SNIPERCOOP,
     ADVISE,
     LMOUSECLICK,
     RMOUSECLICK
 };
 
-bool spam_alicemacro  = false;
+bool spam_snipermacro  = false;
+bool spam_snipercoop  = false;
 bool spam_advise = false;
 bool spam_lmouseclick = false;
 bool spam_rmouseclick = false;
@@ -39,52 +43,15 @@ int randy(int max, int min){
    return (rand() % (max + 1 - min)) + min;
 }
 
-bool process_record_user(uint16_t keycode, keyrecord_t* record) {
-    switch (keycode) {
-    case ALICEMACRO:
-        if (record->event.pressed) {
-            spam_alicemacro = true;
-            spam_timer = timer_read32();
-        } else {
-            spam_alicemacro = false;
-            spam_timer = timer_read32();
-        }
-        break;
-
-    case ADVISE:
-        if (record->event.pressed) {
-            spam_advise = !spam_advise;
-            spam_timer = timer_read32();
-        } else {
-            //nothing
-        }
-        break;
-    
-    case LMOUSECLICK:
-        if (record->event.pressed) {
-            spam_lmouseclick = !spam_lmouseclick;
-            spam_timer = timer_read32();
-        } else {
-            //nothing
-        }
-        break;
-
-    case RMOUSECLICK:
-        if (record->event.pressed) {
-            spam_rmouseclick = !spam_rmouseclick;
-            spam_timer = timer_read32();
-        } else {
-            //nothing
-        }
-        break;
-    }
-    return true;
-};
-
-
 void matrix_scan_user(void) {
-  if (spam_alicemacro) {
+  if (spam_snipermacro) {
     if (timer_elapsed32(spam_timer) > randy(50,20)) {
+        tap_code_delay(KC_MS_BTN1, randy(250,200));
+        spam_timer = timer_read32();
+    }
+  }
+  if (spam_snipercoop) {
+    if (timer_elapsed32(spam_timer) > randy(100,40)) {
         tap_code_delay(KC_MS_BTN1, randy(250,200));
         spam_timer = timer_read32();
     }
@@ -117,32 +84,23 @@ void matrix_scan_user(void) {
 
 bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) { 
      for (uint8_t i = led_min; i <= led_max; i++) {
-        if (host_keyboard_led_state().num_lock) {
-            rgb_matrix_set_color(4, RGB_WHITE);
-        } else {
-            rgb_matrix_set_color(4, RGB_BLACK);
-        }
-        
         if (spam_advise == true) {
-            rgb_matrix_set_color(14, RGB_BLUE);
+            int keys[] = {18, 19, 20, 21};
+            for(uint8_t r = 0; r < sizeof(keys)/sizeof(int); r++) {
+                rgb_matrix_set_color(keys[r], RGB_BLUE);
+            }
         }
         
         if (spam_lmouseclick == true) {
-            int keys[] = {4, 5, 6, 7};
+            int keys[] = {9, 10, 11, 12};
             for(uint8_t r = 0; r < sizeof(keys)/sizeof(int); r++) {
-                rgb_matrix_set_color(keys[r], RGB_RED);
+                rgb_matrix_set_color(keys[r], RGB_BLUE);
             }
         }
         if (spam_rmouseclick == true) {
-            int keys[] = {9, 10, 11, 12};
+            int keys[] = {14, 15, 16, 17};
             for(uint8_t r = 0; r < sizeof(keys)/sizeof(int); r++) {
-                rgb_matrix_set_color(keys[r], RGB_RED);
-            }
-        }
-        if (spam_advise == true) {
-            int keys[] = {18, 19, 20};
-            for(uint8_t r = 0; r < sizeof(keys)/sizeof(int); r++) {
-                rgb_matrix_set_color(keys[r], RGB_RED);
+                rgb_matrix_set_color(keys[r], RGB_BLUE);
             }
         }
 
@@ -150,6 +108,9 @@ bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
 
         case BASE:
             rgb_matrix_set_color(i, 0x00, 0x00, 0x00);  // RGB off
+            break;
+        case FN:
+            rgb_matrix_set_color(i, 0x00, 0xFF, 0x00);  // RGB Green
             break;
         case NIKKE:
             rgb_matrix_set_color(i, 0xF0, 0x14, 0x3C);  // RGB Crimson
@@ -164,33 +125,97 @@ bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
 // clang-format off
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [BASE] = LAYOUT_tenkey_27(
-        _______,         BT_HST1, BT_HST2, BT_HST3, P2P4G,
+        KC_MUTE,         KC_ESC, KC_DEL, KC_TAB, KC_BSPC,
         TG(NIKKE),	 KC_NUM, KC_PSLS,KC_PAST,KC_PMNS,
         _______,	 KC_P7,	 KC_P8,	 KC_P9,	 KC_PPLS,
         _______,	 KC_P4,	 KC_P5,	 KC_P6,
         _______,	 KC_P1,	 KC_P2,	 KC_P3,	 KC_PENT,
-        _______,         KC_P0,          KC_PDOT         ),
+        MO(FN),          KC_P0,          KC_PDOT         ),
+
+    [FN] = LAYOUT_tenkey_27(
+        RGB_TOG, BT_HST1, BT_HST2, BT_HST3, P2P4G,
+        _______, RGB_MOD, RGB_VAI, RGB_HUI, _______,
+        _______, RGB_RMOD,RGB_VAD, RGB_HUD, _______,
+        _______, RGB_SAI, RGB_SPI, KC_MPRV,
+        _______, RGB_SAD, RGB_SPD, KC_MPLY, _______,
+        _______, RGB_TOG,          KC_MNXT          ),
 
     [NIKKE] = LAYOUT_tenkey_27(
         KC_Z,  KC_X, KC_C, KC_V, KC_B,
-        TO(BASE), KC_A, KC_S, KC_D, KC_F0,
-        LMOUSECLICK,  _______, _______, _______, _______,
+        TO(BASE), KC_A, KC_S, KC_D, KC_F,
+        LMOUSECLICK,  _______, _______, _______, SNIPERCOOP,
         RMOUSECLICK,  _______, _______, _______,
-        ______,  _______, _______, _______, _______,
-        ADVISE,  _______,          ALICEMACRO,          )
+        ADVISE,  _______, _______, _______, SNIPERMACRO,
+        _______,  _______,          _______          ),
+    
+    [L3] = LAYOUT_tenkey_27(
+        _______, _______, _______, _______, _______,
+        _______, _______, _______, _______, _______,
+        _______, _______, _______, _______, _______,
+        _______, _______, _______, _______,
+        _______, _______, _______, _______, _______,
+        _______, _______,          _______          )
 };
 
 // clang-format on
-//#if defined(ENCODER_MAP_ENABLE)
-//const uint16_t PROGMEM encoder_map[][NUM_ENCODERS][2] = {
-//    [BASE] = {ENCODER_CCW_CW(KC_VOLD, KC_VOLU)},
-//    [FN]   = {ENCODER_CCW_CW(RGB_VAD, RGB_VAI)},
-//    [L2]   = {ENCODER_CCW_CW(KC_VOLD, KC_VOLU)},
-//    [L3]   = {ENCODER_CCW_CW(RGB_VAD, RGB_VAI)},
-//};
-//#endif // ENCODER_MAP_ENABLE
+#if defined(ENCODER_MAP_ENABLE)
+const uint16_t PROGMEM encoder_map[][NUM_ENCODERS][2] = {
+    [BASE]    = {ENCODER_CCW_CW(_______, _______)},
+    [FN]      = {ENCODER_CCW_CW(KC_VOLD, KC_VOLU)},
+    [NIKKE]   = {ENCODER_CCW_CW(_______, _______)},
+    [L3]      = {ENCODER_CCW_CW(RGB_VAD, RGB_VAI)},
+};
+#endif // ENCODER_MAP_ENABLE
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+    switch (keycode) {
+    case SNIPERMACRO:
+        if (record->event.pressed) {
+            spam_snipermacro = true;
+            spam_timer = timer_read32();
+        } else {
+            spam_snipermacro = false;
+            spam_timer = timer_read32();
+        }
+        break;
+
+    case SNIPERCOOP:
+        if (record->event.pressed) {
+            spam_snipercoop = true;
+            spam_timer = timer_read32();
+        } else {
+            spam_snipercoop = false;
+            spam_timer = timer_read32();
+        }
+        break;
+
+    case ADVISE:
+        if (record->event.pressed) {
+            spam_advise = !spam_advise;
+            spam_timer = timer_read32();
+        } else {
+            //nothing
+        }
+        break;
+    
+    case LMOUSECLICK:
+        if (record->event.pressed) {
+            spam_lmouseclick = !spam_lmouseclick;
+            spam_timer = timer_read32();
+        } else {
+            //nothing
+        }
+        break;
+
+    case RMOUSECLICK:
+        if (record->event.pressed) {
+            spam_rmouseclick = !spam_rmouseclick;
+            spam_timer = timer_read32();
+        } else {
+            //nothing
+        }
+        break;
+    }
     if (!process_record_keychron_common(keycode, record)) {
         return false;
     }
