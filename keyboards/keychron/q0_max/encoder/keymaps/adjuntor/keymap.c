@@ -84,6 +84,9 @@ void matrix_scan_user(void) {
 
 bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) { 
      for (uint8_t i = led_min; i <= led_max; i++) {
+        if (host_keyboard_led_state().num_lock) {
+            rgb_matrix_set_color(5, RGB_WHITE);
+        }
         if (spam_advise == true) {
             int keys[] = {18, 19, 20, 21};
             for(uint8_t r = 0; r < sizeof(keys)/sizeof(int); r++) {
@@ -143,10 +146,10 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [NIKKE] = LAYOUT_tenkey_27(
         KC_Z,  KC_X, KC_C, KC_V, KC_B,
         TO(BASE), KC_A, KC_S, KC_D, KC_F,
-        LMOUSECLICK,  _______, _______, _______, SNIPERCOOP,
+        LMOUSECLICK,  KC_ESC, _______, _______, SNIPERCOOP,
         RMOUSECLICK,  _______, _______, _______,
         ADVISE,  _______, _______, _______, SNIPERMACRO,
-        _______,  _______,          _______          ),
+        _______,  KC_SPACE,          _______          ),
     
     [L3] = LAYOUT_tenkey_27(
         _______, _______, _______, _______, _______,
