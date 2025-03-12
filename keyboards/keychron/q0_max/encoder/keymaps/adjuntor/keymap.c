@@ -146,7 +146,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [NIKKE] = LAYOUT_tenkey_27(
         KC_Z,  KC_X, KC_C, KC_V, KC_B,
         TO(BASE), KC_A, KC_S, KC_D, KC_F,
-        LMOUSECLICK,  KC_ESC, _______, _______, SNIPERCOOP,
+        LMOUSECLICK,  KC_ESC, KC_LEFT_SHIFT, KC_TAB, SNIPERCOOP,
         RMOUSECLICK,  _______, _______, _______,
         ADVISE,  _______, _______, _______, SNIPERMACRO,
         _______,  KC_SPACE,          _______          ),
