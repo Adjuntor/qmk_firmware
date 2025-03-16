@@ -46,7 +46,7 @@
 #    define RGB_MATRIX_BRIGHTNESS_TURN_OFF_VAL 32
 
 /* Indications */
-#    define NUM_LOCK_INDEX	5
+// #    define NUM_LOCK_INDEX	5
 #    define LOW_BAT_IND_INDEX { 24 }
 
 #    define RGB_MATRIX_KEYPRESSES
