@@ -44,7 +44,6 @@ int randy(int max, int min){
    return (rand() % (max + 1 - min)) + min;
 }
 
-
 void matrix_scan_user(void) {
   if (spam_snipermacro) {
     if (timer_elapsed32(spam_timer) > randy(50,20)) {
@@ -97,7 +96,7 @@ bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
             for(uint8_t r = 0; r < sizeof(keys)/sizeof(int); r++) {
                 rgb_matrix_set_color(keys[r], RGB_BLUE);
             }
-        }
+        }  
         if (spam_rmouseclick == true) {
             int keys[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
             for(uint8_t r = 0; r < sizeof(keys)/sizeof(int); r++) {
@@ -165,8 +164,6 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
      _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,            _______,            RMOUSECLICK,
      _______,            _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,            _______,  _______,  _______,
      _______,  _______,  _______,                                _______,                                _______,  _______,  _______,  _______,  _______,  _______)
-
-
 };
 
 // clang-format on
