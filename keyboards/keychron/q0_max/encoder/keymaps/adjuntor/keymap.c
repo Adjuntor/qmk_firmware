@@ -35,12 +35,12 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         MO(FN),  KC_P0,          KC_PDOT         ),
 
     [FN] = LAYOUT_tenkey_27(
-        RGB_TOG, BT_HST1, BT_HST2, BT_HST3, P2P4G,
-        _______, RGB_MOD, RGB_VAI, RGB_HUI, _______,
-        _______, RGB_RMOD,RGB_VAD, RGB_HUD, _______,
-        _______, RGB_SAI, RGB_SPI, KC_MPRV,
-        _______, RGB_SAD, RGB_SPD, KC_MPLY, _______,
-        _______, RGB_TOG,          KC_MNXT          ),
+        _______, BT_HST1, BT_HST2, BT_HST3, P2P4G,
+        _______, _______, _______, _______, _______,
+        _______, _______, _______, _______, _______,
+        _______, _______, _______, KC_MPRV,
+        _______, _______, _______, KC_MPLY, _______,
+        _______, _______,          KC_MNXT          ),
 
     [L2] = LAYOUT_tenkey_27(
         _______, _______, _______, _______, _______,
@@ -76,11 +76,22 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     return true;
 }
 
-
 bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) { 
      for (uint8_t i = led_min; i <= led_max; i++) {
         if (host_keyboard_led_state().num_lock) {
             rgb_matrix_set_color(5, RGB_WHITE);
+        }
+
+        switch(get_highest_layer(layer_state|default_layer_state)) {
+
+        case BASE:
+            rgb_matrix_set_color(i, 0x00, 0x00, 0x00);  // RGB off
+            break;
+        case FN:
+            rgb_matrix_set_color(i, 0x00, 0xFF, 0x00);  // RGB Green
+            break;
+        default:
+            break;
         }
     }
     return false;
