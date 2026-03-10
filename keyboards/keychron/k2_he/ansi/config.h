@@ -27,7 +27,7 @@
 /* Indications */
 #    define CAPS_LOCK_INDEX 46
 #    define LOW_BAT_IND_INDEX \
-        { 77 }
+        { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 13, 14, 15, 16, 30, 31, 45, 46, 59, 60, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83 }
 #    define PROFILE_LED_MATRIX_LIST \
         { 61, 62, 63 }
 
