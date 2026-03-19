@@ -16,6 +16,7 @@
 
 #include QMK_KEYBOARD_H
 #include "keychron_common.h"
+#include "he_utils.h"
 
 enum layers {
     MAC_BASE,
@@ -34,8 +35,27 @@ enum custom_keycodes {
     SNIPERCOOP,
     LMOUSECLICK,
     RMOUSECLICK,
-    GOBACK
+    GOBACK,
+    CALIBRATION,
+    CLEARCALIBRATION
 };
+
+void keyboard_post_init_user(void) {
+  // Call the post init code.
+    /* Example usage:
+    * ```
+    * set_key_actuation_point(0, 1, 3);   // "1" key = 0.3mm actuation point
+    * set_key_actuation_point(0, 2, 10);  // "2" key = 1.0mm actuation point
+    * set_key_actuation_point(1, 0, 0);   // Use global setting for this key
+    * ```
+    */
+    int keys[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
+    for(uint8_t r = 0; r < sizeof(keys)/sizeof(int); r++) {
+        set_key_actuation_point(0, keys[r], 25);
+    }
+    rgb_matrix_mode(RGB_MATRIX_CUSTOM_default_off);
+}
+
 
 bool spam_snipermacro = false;
 bool spam_snipercoop  = false;
@@ -91,8 +111,36 @@ void matrix_scan_user(void) {
 */
 // Change LED
 bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) { 
+    uint8_t layer = get_highest_layer(layer_state);
+    for (uint8_t i = led_min; i < led_max; i++) {
+        switch(get_highest_layer(layer_state|default_layer_state)) {
+            case MACRO:
+                for (uint8_t row = 0; row < MATRIX_ROWS; ++row) {
+                    for (uint8_t col = 0; col < MATRIX_COLS; ++col) {
+                        uint8_t index = g_led_config.matrix_co[row][col];
+                        if (index >= led_min && index < led_max && index != NO_LED && keymap_key_to_keycode(layer, (keypos_t){col,row}) > KC_TRNS) {
+                            rgb_matrix_set_color(index, 0xDC, 0x14, 0x3C);  // RGB Crimson
+                        }
+                    }
+                }
+                break;
+            case WIN_FN:
+            case MAC_FN:
+                for (uint8_t row = 0; row < MATRIX_ROWS; ++row) {
+                    for (uint8_t col = 0; col < MATRIX_COLS; ++col) {
+                        uint8_t index = g_led_config.matrix_co[row][col];
+                        if (index >= led_min && index < led_max && index != NO_LED && keymap_key_to_keycode(layer, (keypos_t){col,row}) > KC_TRNS) {
+                            rgb_matrix_set_color(index, 0x15, 0x80, 0x15);  // RGB Green
+                        }
+                    }
+                }
+                break;
+            default:
+                break;
+        }
+    }
      
-     for (uint8_t i = led_min; i <= led_max; i++) {    
+    for (uint8_t i = led_min; i <= led_max; i++) {    
         if (spam_lmouseclick == true) {
             int keys[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
             for(uint8_t r = 0; r < sizeof(keys)/sizeof(int); r++) {
@@ -104,22 +152,7 @@ bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
             for(uint8_t r = 0; r < sizeof(keys)/sizeof(int); r++) {
                 rgb_matrix_set_color(keys[r], RGB_BLUE);
             }
-        }
-        
-        switch(get_highest_layer(layer_state|default_layer_state)) {
-
-        case WIN_BASE:
-            rgb_matrix_set_color(i, 0x00, 0x00, 0x00);  // RGB Off
-            break;
-        case MACRO:
-            rgb_matrix_set_color(i, 0x8B, 0x45, 0x13);  // RGB Saddle Brown
-            break;
-        case WIN_FN:
-            rgb_matrix_set_color(i, 0x15, 0x80, 0x15);  // RGB Green
-            break;
-        default:
-            break;
-        }
+        }    
     }
     return false;
 }
@@ -148,7 +181,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
      KC_TAB,   KC_Q,     KC_W,     KC_E,     KC_R,     KC_T,     KC_Y,     KC_U,     KC_I,     KC_O,     KC_P,     KC_LBRC,  KC_RBRC,  KC_BSLS,            KC_PGDN,
      KC_CAPS,  KC_A,     KC_S,     KC_D,     KC_F,     KC_G,     KC_H,     KC_J,     KC_K,     KC_L,     KC_SCLN,  KC_QUOT,            KC_ENT,             KC_HOME,
      KC_LSFT,            KC_Z,     KC_X,     KC_C,     KC_V,     KC_B,     KC_N,     KC_M,     KC_COMM,  KC_DOT,   KC_SLSH,            KC_RSFT,  KC_UP,    KC_END,
-     KC_LCTL,  KC_LGUI,  KC_LALT,                                KC_SPC,                                 KC_RALT, FN_WIN,KC_RCTL,  KC_LEFT,  KC_DOWN,  KC_RGHT),
+     KC_LCTL,  KC_LGUI,  KC_LALT,                                KC_SPC,                                 KC_RALT,  FN_WIN,   KC_RCTL,  KC_LEFT,  KC_DOWN,  KC_RGHT),
 
 [MACRO] = LAYOUT_ansi_84(
      _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  GOBACK,
@@ -163,7 +196,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
      _______,  BT_HST1,  BT_HST2,  BT_HST3,  P2P4G,    _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,            _______,
      UG_TOGG,  UG_NEXT,  UG_VALU,  UG_HUEU,  UG_SATU,  UG_SPDU,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,            _______,
      _______,  UG_PREV,  UG_VALD,  UG_HUED,  UG_SATD,  UG_SPDD,  _______,  _______,  _______,  _______,  _______,  _______,            _______,            _______,
-     _______,            _______,  _______,  _______,  _______,  BAT_LVL,  NK_TOGG,  _______,  _______,  _______,  _______,          _______,  _______,  _______,
+     _______,            _______,  CLEARCALIBRATION,  CALIBRATION,  _______,  BAT_LVL,  NK_TOGG,  _______,  _______,  _______,  _______,          _______,  _______,  _______,
      _______,  _______,  _______,                                _______,                                _______,  _______,  _______,  _______,  _______,  _______)
 };
 
@@ -208,6 +241,21 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         }
         break;
 
+    case CALIBRATION:
+        //layer_clear();
+        if (record->event.pressed) {
+             start_calibration();
+        } 
+        return false;
+        break;
+    case CLEARCALIBRATION:
+        if (record->event.pressed) {
+             clear_calibration_data();
+        } 
+        return false;
+        break;
+
+
 // DISABLE ALL MACROS AND RETURN TO BASE LAYER
     case GOBACK:
         if (record->event.pressed) {
@@ -220,7 +268,6 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             layer_off(MACRO);
         }
         break;
-
     }
 
     if (!process_record_keychron_common(keycode, record)) {
