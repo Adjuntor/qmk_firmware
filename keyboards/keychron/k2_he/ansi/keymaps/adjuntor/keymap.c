@@ -139,21 +139,12 @@ bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
                 break;
         }
     }
-     
-    for (uint8_t i = led_min; i <= led_max; i++) {    
-        if (spam_lmouseclick == true) {
-            int keys[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
-            for(uint8_t r = 0; r < sizeof(keys)/sizeof(int); r++) {
-                rgb_matrix_set_color(keys[r], RGB_BLUE);
-            }
-        }  
-        if (spam_rmouseclick == true) {
-            int keys[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
-            for(uint8_t r = 0; r < sizeof(keys)/sizeof(int); r++) {
-                rgb_matrix_set_color(keys[r], RGB_BLUE);
-            }
-        }    
-    }
+    if (spam_lmouseclick == true) {
+        rgb_matrix_set_color(30, RGB_BLUE);
+    }  
+    if (spam_rmouseclick == true) {
+        rgb_matrix_set_color(45, RGB_BLUE);
+    }    
     return false;
 }
 
@@ -227,8 +218,6 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         if (record->event.pressed) {
             spam_lmouseclick = !spam_lmouseclick;
             spam_timer = timer_read32();
-        } else {
-            //nothing
         }
         break;
 
@@ -236,30 +225,25 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         if (record->event.pressed) {
             spam_rmouseclick = !spam_rmouseclick;
             spam_timer = timer_read32();
-        } else {
-            //nothing
         }
         break;
 
     case CALIBRATION:
-        //layer_clear();
         if (record->event.pressed) {
              start_calibration();
         } 
-        return false;
         break;
+        
     case CLEARCALIBRATION:
         if (record->event.pressed) {
              clear_calibration_data();
         } 
-        return false;
         break;
-
 
 // DISABLE ALL MACROS AND RETURN TO BASE LAYER
     case GOBACK:
         if (record->event.pressed) {
-            spam_snipermacro = false;
+        spam_snipermacro = false;
 	    spam_snipercoop  = false;
 	    spam_lmouseclick = false;
 	    spam_rmouseclick = false;
