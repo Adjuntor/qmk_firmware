@@ -40,22 +40,15 @@ enum custom_keycodes {
     CLEARCALIBRATION
 };
 
-void keyboard_post_init_user(void) {
-  // Call the post init code.
-    /* Example usage:
-    * ```
-    * set_key_actuation_point(0, 1, 3);   // "1" key = 0.3mm actuation point
-    * set_key_actuation_point(0, 2, 10);  // "2" key = 1.0mm actuation point
-    * set_key_actuation_point(1, 0, 0);   // Use global setting for this key
-    * ```
-    */
-    int keys[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
-    for(uint8_t r = 0; r < sizeof(keys)/sizeof(int); r++) {
-        set_key_actuation_point(0, keys[r], 25);
-    }
-    rgb_matrix_mode(RGB_MATRIX_CUSTOM_default_off);
+// RANDOM TIME FUNCTION
+int randy(int max, int min){
+   return (rand() % (max + 1 - min)) + min;
 }
 
+void keyboard_post_init_user(void) {
+  // Call the post init code.
+    rgb_matrix_mode(RGB_MATRIX_CUSTOM_default_off);
+}
 
 bool spam_snipermacro = false;
 bool spam_snipercoop  = false;
@@ -63,13 +56,9 @@ bool spam_lmouseclick = false;
 bool spam_rmouseclick = false;
 uint32_t spam_timer = 0;
 
-// RANDOM TIME FUNCTION
-int randy(int max, int min){
-   return (rand() % (max + 1 - min)) + min;
-}
-
 // MACRO
 void matrix_scan_user(void) {
+  clear_calibration_data();
   if (spam_snipermacro) {
     if (timer_elapsed32(spam_timer) > randy(50,20)) {
         tap_code_delay(MS_BTN1, randy(250,200));
@@ -111,6 +100,7 @@ void matrix_scan_user(void) {
 */
 // Change LED
 bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) { 
+
     uint8_t layer = get_highest_layer(layer_state);
     for (uint8_t i = led_min; i < led_max; i++) {
         switch(get_highest_layer(layer_state|default_layer_state)) {
@@ -187,7 +177,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
      _______,  BT_HST1,  BT_HST2,  BT_HST3,  P2P4G,    _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,            _______,
      UG_TOGG,  UG_NEXT,  UG_VALU,  UG_HUEU,  UG_SATU,  UG_SPDU,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,            _______,
      _______,  UG_PREV,  UG_VALD,  UG_HUED,  UG_SATD,  UG_SPDD,  _______,  _______,  _______,  _______,  _______,  _______,            _______,            _______,
-     _______,            _______,  CLEARCALIBRATION,  CALIBRATION,  _______,  BAT_LVL,  NK_TOGG,  _______,  _______,  _______,  _______,          _______,  _______,  _______,
+     _______,            _______,  CLEARCALIBRATION,  CALIBRATION,  _______,  BAT_LVL,  NK_TOGG,  _______,  _______,  _______,   _______,          _______,  _______,  _______,
      _______,  _______,  _______,                                _______,                                _______,  _______,  _______,  _______,  _______,  _______)
 };
 
