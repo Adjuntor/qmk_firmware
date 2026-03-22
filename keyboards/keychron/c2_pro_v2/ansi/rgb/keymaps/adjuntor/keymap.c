@@ -114,10 +114,10 @@ bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
         }
     }
     if (spam_lmouseclick == true) {
-        rgb_matrix_set_color(30, RGB_BLUE);
+        rgb_matrix_set_color(32, RGB_BLUE);
     }  
     if (spam_rmouseclick == true) {
-        rgb_matrix_set_color(45, RGB_BLUE);
+        rgb_matrix_set_color(53, RGB_BLUE);
     }    
     return false;
 }
