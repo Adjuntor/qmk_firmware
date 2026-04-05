@@ -17,58 +17,33 @@
 #include QMK_KEYBOARD_H
 
 enum my_layers {
-    _FIRST_LAYER,
+    _FIRST_LAYER
 };
 
 enum custom_keycodes {
-    ASSASSINATE,
-    STAB,
+    CONFIRM = SAFE_RANGE
 };
 
-bool spam_assassinate;
-bool spam_stab;
-
-int randy(int max, int min){
-   return (rand() % (max + 1 - min)) + min;
-}
-//tap_code_delay(KC_A, randy(80,50));
-
-bool process_record_user(uint16_t keycode, keyrecord_t* record) {
+// clang-format on
+bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     switch (keycode) {
-    case ASSASSINATE:
+    case CONFIRM:
         if (record->event.pressed) {
-            spam_assassinate = true;
-        } else {
-            spam_assassinate = false;
+            //spam_confirm = true;
+            SEND_STRING(SS_LCTL("8") SS_DELAY(500) SS_TAP(X_ENTER));
         }
-        break;
-    case STAB:
-        if (record->event.pressed) {
-            spam_stab = true;
-        } else {
-            spam_stab = false;
-        }
-        break;
     }
     return true;
-};
+}
 
-void matrix_scan_user(void) {
-  if (spam_assassinate) {
-    SEND_STRING( SS_TAP(X_LEFT_CTRL) SS_TAP(X_A));
-  }
-  if (spam_stab) {
-    SEND_STRING( SS_TAP(X_LEFT_SHIFT) SS_TAP(X_A) SS_TAP(X_T));
-  }
 
-};
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [_FIRST_LAYER] = LAYOUT(
-        KC_D,  KC_F, KC_J, KC_EQUAL, KC_O,
-        KC_7,   KC_8,   KC_9,   KC_0, KC_MINUS,
-        KC_6,   KC_Y,   KC_5,   KC_U, KC_3,
-        KC_INSERT, KC_HOME, KC_PGUP, KC_PGDN, KC_4,
-        KC_DEL,   KC_END, ASSASSINATE, KC_LEFT_ALT, STAB
+        KC_UP, KC_7, KC_8, KC_9, CONFIRM,
+        KC_DOWN, KC_4, KC_5, KC_6, _______,
+        LCTL(KC_4), KC_1, KC_2, KC_3, LCTL(KC_9),
+        _______, _______, KC_0, _______, _______,
+        LCTL(KC_6), _______, _______, _______, LCTL(KC_7)
     ),
 };
