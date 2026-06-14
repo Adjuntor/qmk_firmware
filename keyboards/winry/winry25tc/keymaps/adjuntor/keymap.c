@@ -40,9 +40,9 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [_FIRST_LAYER] = LAYOUT(
-        KC_UP, KC_7, KC_8, KC_9, CONFIRM,
+        KC_UP, KC_1, KC_2, KC_3, CONFIRM,
         KC_DOWN, KC_4, KC_5, KC_6, _______,
-        LCTL(KC_4), KC_1, KC_2, KC_3, LCTL(KC_9),
+        LCTL(KC_4), KC_7, KC_8, KC_9, LCTL(KC_9),
         _______, _______, KC_0, _______, _______,
         LCTL(KC_6), _______, _______, _______, LCTL(KC_7)
     ),
