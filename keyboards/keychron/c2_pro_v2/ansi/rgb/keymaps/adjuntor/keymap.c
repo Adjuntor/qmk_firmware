@@ -1,20 +1,5 @@
-/* Copyright 2025 @ Keychron (https://www.keychron.com)
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
-
 #include QMK_KEYBOARD_H
+#include <stdlib.h>
 
 enum layers{
   MAC_BASE,
@@ -35,91 +20,118 @@ enum custom_keycodes {
     GOBACK,
 };
 
-// RANDOM TIME FUNCTION
-int randy(int max, int min){
-   return (rand() % (max + 1 - min)) + min;
+// Returns a random int in [min, max], inclusive
+int randy(int min, int max) {
+    return min + rand() % (max - min + 1);
 }
 
 void keyboard_post_init_user(void) {
-  // Call the post init code.
+    srand(timer_read32());
     rgb_matrix_mode(RGB_MATRIX_CUSTOM_default_off);
 }
 
-bool spam_snipermacro = false;
-bool spam_snipercoop  = false;
-bool spam_lmouseclick = false;
-bool spam_rmouseclick = false;
-uint32_t spam_timer = 0;
+// ---------------------------------------------------------------------------
+// Non-blocking click macros
+// Each macro presses and releases its button across separate matrix scans,
+// so the rest of the keyboard keeps working while a macro runs.
+// ---------------------------------------------------------------------------
+enum { SP_SNIPER, SP_COOP, SP_LCLICK, SP_RCLICK, SP_COUNT };
+
+typedef struct {
+    bool     enabled;
+    bool     pressed;
+    uint16_t keycode;
+    uint16_t hold_min, hold_max;   // how long the button stays down (ms)
+    uint16_t gap_min,  gap_max;    // pause between clicks (ms)
+    uint32_t timer;
+    uint32_t wait;
+} spam_t;
+
+static spam_t spam[SP_COUNT] = {
+    [SP_SNIPER] = { .keycode = MS_BTN1, .hold_min = 210, .hold_max = 260, .gap_min = 30, .gap_max = 60  },
+    [SP_COOP]   = { .keycode = MS_BTN1, .hold_min = 210, .hold_max = 260, .gap_min = 60, .gap_max = 120 },
+    
+    [SP_LCLICK] = { .keycode = MS_BTN1, .hold_min = 20,  .hold_max = 50,  .gap_min = 80, .gap_max = 100 },
+    [SP_RCLICK] = { .keycode = MS_BTN2, .hold_min = 20,  .hold_max = 50,  .gap_min = 80, .gap_max = 100 },
+};
+
+static void spam_set(uint8_t i, bool on) {
+    spam_t *s = &spam[i];
+    if (s->pressed) {
+        unregister_code(s->keycode);   // never leave a button stuck down
+        s->pressed = false;
+    }
+    s->enabled = on;
+    s->timer   = timer_read32();
+    s->wait    = randy(s->gap_min, s->gap_max);
+}
+
+static void spam_all_off(void) {
+    for (uint8_t i = 0; i < SP_COUNT; i++) {
+        spam_set(i, false);
+    }
+}
 
 // MACRO
 void matrix_scan_user(void) {
-  if (spam_snipermacro) {
-    if (timer_elapsed32(spam_timer) > randy(50,20)) {
-        tap_code_delay(MS_BTN1, randy(250,200));
-        spam_timer = timer_read32();
-    }
-  }
-  if (spam_snipercoop) {
-    if (timer_elapsed32(spam_timer) > randy(100,40)) {
-        tap_code_delay(MS_BTN1, randy(250,200));
-        spam_timer = timer_read32();
-    }
-  }
+    for (uint8_t i = 0; i < SP_COUNT; i++) {
+        spam_t *s = &spam[i];
+        if (!s->enabled) continue;
+        if (timer_elapsed32(s->timer) < s->wait) continue;
 
-  if (spam_lmouseclick) {
-    if (timer_elapsed32(spam_timer) > randy(100,80)) {
-        tap_code_delay(MS_BTN1, randy(50,20));
-        spam_timer = timer_read32();
-    }
-  }
-
-  if (spam_rmouseclick) {
-    if (timer_elapsed32(spam_timer) > randy(100,80)) {
-        tap_code_delay(MS_BTN2, randy(50,20));
-        spam_timer = timer_read32();
-    }
-  }
-
-};
-
-// Change LED
-bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) { 
-
-    uint8_t layer = get_highest_layer(layer_state);
-    for (uint8_t i = led_min; i < led_max; i++) {
-        switch(get_highest_layer(layer_state|default_layer_state)) {
-            case MACRO:
-                for (uint8_t row = 0; row < MATRIX_ROWS; ++row) {
-                    for (uint8_t col = 0; col < MATRIX_COLS; ++col) {
-                        uint8_t index = g_led_config.matrix_co[row][col];
-                        if (index >= led_min && index < led_max && index != NO_LED && keymap_key_to_keycode(layer, (keypos_t){col,row}) > KC_TRNS) {
-                            rgb_matrix_set_color(index, 0xDC, 0x14, 0x3C);  // RGB Crimson
-                        }
-                    }
-                }
-                break;
-            case WIN_FN:
-            case MAC_FN:
-                for (uint8_t row = 0; row < MATRIX_ROWS; ++row) {
-                    for (uint8_t col = 0; col < MATRIX_COLS; ++col) {
-                        uint8_t index = g_led_config.matrix_co[row][col];
-                        if (index >= led_min && index < led_max && index != NO_LED && keymap_key_to_keycode(layer, (keypos_t){col,row}) > KC_TRNS) {
-                            rgb_matrix_set_color(index, 0x15, 0x80, 0x15);  // RGB Green
-                        }
-                    }
-                }
-                break;
-            default:
-                break;
+        s->timer = timer_read32();
+        if (s->pressed) {
+            unregister_code(s->keycode);
+            s->pressed = false;
+            s->wait    = randy(s->gap_min, s->gap_max);
+        } else {
+            register_code(s->keycode);
+            s->pressed = true;
+            s->wait    = randy(s->hold_min, s->hold_max);
         }
     }
-    if (spam_lmouseclick == true) {
+}
+
+// Change LED
+bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
+    uint8_t layer = get_highest_layer(layer_state | default_layer_state);
+
+    uint8_t r = 0, g = 0, b = 0;
+    bool    colorize = false;
+
+    switch (layer) {
+        case MACRO:
+            r = 0xDC; g = 0x14; b = 0x3C;  // RGB Crimson
+            colorize = true;
+            break;
+        case WIN_FN:
+        case MAC_FN:
+            r = 0x15; g = 0x80; b = 0x15;  // RGB Green
+            colorize = true;
+            break;
+        default:
+            break;
+    }
+
+    if (colorize) {
+        for (uint8_t row = 0; row < MATRIX_ROWS; ++row) {
+            for (uint8_t col = 0; col < MATRIX_COLS; ++col) {
+                uint8_t index = g_led_config.matrix_co[row][col];
+                if (index >= led_min && index < led_max && index != NO_LED &&
+                    keymap_key_to_keycode(layer, (keypos_t){col, row}) > KC_TRNS) {
+                    rgb_matrix_set_color(index, r, g, b);
+                }
+            }
+        }
+    }
+
+    if (spam[SP_LCLICK].enabled) {
         rgb_matrix_set_color(32, RGB_BLUE);
-    }  
-    if (spam_rmouseclick == true) {
+    }
+    if (spam[SP_RCLICK].enabled) {
         rgb_matrix_set_color(53, RGB_BLUE);
-    }    
-    return false;
+    }
+    return true;   // keep keyboard-level indicators (Caps Lock, etc.)
 }
 
 
@@ -158,7 +170,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         _______,  _______,  _______,                                _______,                                _______,  _______,  _______,    _______,  _______,  _______,  _______,  _______,            _______         ),
 
     [WIN_FN] = LAYOUT_104_ansi(
-        _______,            KC_BRID,  KC_BRIU,  KC_TASK,  KC_FLXP,  RM_VALU,  RM_VALU,  KC_MPRV,  KC_MPLY,  KC_MNXT,  KC_MUTE,  KC_VOLD,    KC_VOLU,  _______,  _______,  RM_TOGG,
+        _______,            KC_BRID,  KC_BRIU,  KC_TASK,  KC_FLXP,  RM_VALD,  RM_VALU,  KC_MPRV,  KC_MPLY,  KC_MNXT,  KC_MUTE,  KC_VOLD,    KC_VOLU,  _______,  _______,  RM_TOGG,
         _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,    _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,
         RM_TOGG,  RM_NEXT,  RM_VALU,  RM_HUEU,  RM_SATU,  RM_SPDU,  _______,  _______,  _______,  _______,  _______,  _______,  _______,    _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,
         _______,  RM_PREV,  RM_VALD,  RM_HUED,  RM_SATD,  RM_SPDD,  _______,  _______,  _______,  _______,  _______,  _______,              _______,                                _______,  _______,  _______,
@@ -170,47 +182,29 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     switch (keycode) {
     case SNIPERMACRO:
-        if (record->event.pressed) {
-            spam_snipermacro = true;
-            spam_timer = timer_read32();
-        } else {
-            spam_snipermacro = false;
-            spam_timer = timer_read32();
-        }
+        spam_set(SP_SNIPER, record->event.pressed);   // hold to fire
         break;
 
     case SNIPERCOOP:
-        if (record->event.pressed) {
-            spam_snipercoop = true;
-            spam_timer = timer_read32();
-        } else {
-            spam_snipercoop = false;
-            spam_timer = timer_read32();
-        }
+        spam_set(SP_COOP, record->event.pressed);     // hold to fire
         break;
-    
+
     case LMOUSECLICK:
         if (record->event.pressed) {
-            spam_lmouseclick = !spam_lmouseclick;
-            spam_timer = timer_read32();
+            spam_set(SP_LCLICK, !spam[SP_LCLICK].enabled);   // toggle
         }
         break;
 
     case RMOUSECLICK:
         if (record->event.pressed) {
-            spam_rmouseclick = !spam_rmouseclick;
-            spam_timer = timer_read32();
+            spam_set(SP_RCLICK, !spam[SP_RCLICK].enabled);   // toggle
         }
         break;
 
-// DISABLE ALL MACROS AND RETURN TO BASE LAYER
+    // DISABLE ALL MACROS AND RETURN TO BASE LAYER
     case GOBACK:
         if (record->event.pressed) {
-        spam_snipermacro = false;
-	    spam_snipercoop  = false;
-	    spam_lmouseclick = false;
-	    spam_rmouseclick = false;
-	    spam_timer = timer_read32();
+            spam_all_off();
         } else {
             layer_off(MACRO);
         }
@@ -218,4 +212,3 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     }
     return true;
 }
-
